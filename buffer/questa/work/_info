@@ -1,0 +1,228 @@
+m255
+K4
+z2
+!s12c _opt
+Z0 !s99 nomlopt
+!s11f vlog 2025.1 2025.01, Jan 17 2025
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z1 dC:/Users/macmini4/git_repo/buffer/questa
+T_opt
+!s110 1764945918
+Vk;9R2F>E2zU^Z1EQC5GeQ2
+04 9 4 work tb_axi_s2 fast 0
+=1-90324b6fc3cb-6932effe-a9-3238
+R0
+!s12f OEM100
+!s12b OEM100
+!s124 OEM10U6 
+!s135 nogc
+o-quiet -auto_acc_if_foreign -work work -L altera_mf_ver -L work
+tCvgOpt 0 defaultOptions 1107174692
+n@_opt
+OL;O;2025.1;82
+R1
+vbuffer_elem
+2C:/Users/macmini4/git_repo/buffer/rtl/buffer_elem.sv
+Z2 DXx6 sv_std 3 std 0 22 @5XbY]_OacJl=`ToSm<M^0
+Z3 !s110 1764945883
+!i10b 1
+!s100 =NCL[cD2XlKk2BHmcJ9`52
+I2;DBjRMSUaz=haDbNgh7P2
+S1
+R1
+Z4 w1764943933
+8C:/Users/macmini4/git_repo/buffer/rtl/buffer_elem.sv
+FC:/Users/macmini4/git_repo/buffer/rtl/buffer_elem.sv
+!i122 0
+L0 10 68
+Z5 VDg1SIo80bB@j0V0VzS_@n1
+Z6 OL;L;2025.1;82
+r1
+!s85 0
+31
+!s108 1764945882.000000
+!s107 C:/Users/macmini4/git_repo/buffer/rtl/buffer_elem.sv|
+!s90 -reportprogress|300|+acc|-L|mtiAvm|-L|mtiRnm|-L|mtiOvm|-L|mtiUvm|-L|mtiUPF|-L|infact|C:/Users/macmini4/git_repo/buffer/rtl/buffer_elem.sv|
+!i113 0
+Z7 o+acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
+Z8 tCvgOpt 0 defaultOptions 1085216056
+vbuffer_read
+2C:/Users/macmini4/git_repo/buffer/rtl/buffer_read.sv
+R2
+Z9 !s110 1764945884
+!i10b 1
+!s100 VSLjm0C82W4Xb_:T;3cKX2
+IElLNJY>dla_ECWK2jD^0Q2
+S1
+R1
+R4
+8C:/Users/macmini4/git_repo/buffer/rtl/buffer_read.sv
+FC:/Users/macmini4/git_repo/buffer/rtl/buffer_read.sv
+!i122 4
+L0 3 117
+R5
+R6
+r1
+!s85 0
+31
+Z10 !s108 1764945884.000000
+!s107 C:/Users/macmini4/git_repo/buffer/rtl/buffer_read.sv|
+!s90 -reportprogress|300|+acc|-L|mtiAvm|-L|mtiRnm|-L|mtiOvm|-L|mtiUvm|-L|mtiUPF|-L|infact|C:/Users/macmini4/git_repo/buffer/rtl/buffer_read.sv|
+!i113 0
+R7
+R8
+vbuffer_read_multi_flow
+2C:/Users/macmini4/git_repo/buffer/rtl/buffer_read_multi_flow.sv
+R2
+!s110 1764954887
+!i10b 1
+!s100 ]0c^dLi4d572djI6[UXdN2
+II:5jYi9m;]l=1e^B[;d4D0
+S1
+R1
+w1764954690
+8C:/Users/macmini4/git_repo/buffer/rtl/buffer_read_multi_flow.sv
+FC:/Users/macmini4/git_repo/buffer/rtl/buffer_read_multi_flow.sv
+!i122 8
+L0 5 228
+R5
+R6
+r1
+!s85 0
+31
+!s108 1764954887.000000
+!s107 C:/Users/macmini4/git_repo/buffer/rtl/buffer_read_multi_flow.sv|
+!s90 -reportprogress|300|+acc|-L|mtiAvm|-L|mtiRnm|-L|mtiOvm|-L|mtiUvm|-L|mtiUPF|-L|infact|C:/Users/macmini4/git_repo/buffer/rtl/buffer_read_multi_flow.sv|
+!i113 0
+R7
+R8
+vbuffer_top
+2C:/Users/macmini4/git_repo/buffer/rtl/buffer_top.sv
+R2
+R9
+!i10b 1
+!s100 LQ>6V<:UlkUWI_fm0L]]b3
+I`mI_TnK:^l6ECd:i0GBmO1
+S1
+R1
+R4
+8C:/Users/macmini4/git_repo/buffer/rtl/buffer_top.sv
+FC:/Users/macmini4/git_repo/buffer/rtl/buffer_top.sv
+!i122 3
+L0 6 261
+R5
+R6
+r1
+!s85 0
+31
+R10
+!s107 C:/Users/macmini4/git_repo/buffer/rtl/buffer_top.sv|
+!s90 -reportprogress|300|+acc|-L|mtiAvm|-L|mtiRnm|-L|mtiOvm|-L|mtiUvm|-L|mtiUPF|-L|infact|C:/Users/macmini4/git_repo/buffer/rtl/buffer_top.sv|
+!i113 0
+R7
+R8
+vpointers
+2C:/Users/macmini4/git_repo/buffer/rtl/pointers.sv
+R2
+R3
+!i10b 1
+!s100 =NF2o5=l;6njach;fi1Od2
+IR:57YHW_AMLiK`OSj`^]G3
+S1
+R1
+R4
+8C:/Users/macmini4/git_repo/buffer/rtl/pointers.sv
+FC:/Users/macmini4/git_repo/buffer/rtl/pointers.sv
+!i122 1
+L0 6 99
+R5
+R6
+r1
+!s85 0
+31
+!s108 1764945883.000000
+!s107 C:/Users/macmini4/git_repo/buffer/rtl/pointers.sv|
+!s90 -reportprogress|300|+acc|-L|mtiAvm|-L|mtiRnm|-L|mtiOvm|-L|mtiUvm|-L|mtiUPF|-L|infact|C:/Users/macmini4/git_repo/buffer/rtl/pointers.sv|
+!i113 0
+R7
+R8
+vscfifo
+2C:/Users/macmini4/git_repo/buffer/rtl/scfifo.sv
+R2
+R9
+!i10b 1
+!s100 Z@@aJW?4?0]b9nNl[lNQo2
+If8]9U=PVgLHdb14en?RFV3
+S1
+R1
+R4
+8C:/Users/macmini4/git_repo/buffer/rtl/scfifo.sv
+FC:/Users/macmini4/git_repo/buffer/rtl/scfifo.sv
+!i122 2
+L0 5 78
+R5
+R6
+r1
+!s85 0
+31
+R10
+!s107 C:/Users/macmini4/git_repo/buffer/rtl/scfifo.sv|
+!s90 -reportprogress|300|+acc|-L|mtiAvm|-L|mtiRnm|-L|mtiOvm|-L|mtiUvm|-L|mtiUPF|-L|infact|C:/Users/macmini4/git_repo/buffer/rtl/scfifo.sv|
+!i113 0
+R7
+R8
+vtb_axi_s2
+2C:/Users/macmini4/git_repo/buffer/sim/tb_axi_s2.sv
+R2
+Z11 !s110 1764945885
+!i10b 1
+!s100 M5E`TVMZzm>>SPMSZcMoS2
+I4g`O@5250@e6JH?g]BfXG2
+S1
+R1
+R4
+8C:/Users/macmini4/git_repo/buffer/sim/tb_axi_s2.sv
+FC:/Users/macmini4/git_repo/buffer/sim/tb_axi_s2.sv
+!i122 6
+L0 3 286
+R5
+R6
+r1
+!s85 0
+31
+!s108 1764945885.000000
+!s107 C:/Users/macmini4/git_repo/buffer/sim/tb_axi_s2.sv|
+!s90 -reportprogress|300|+acc|-L|mtiAvm|-L|mtiRnm|-L|mtiOvm|-L|mtiUvm|-L|mtiUPF|-L|infact|-sv|C:/Users/macmini4/git_repo/buffer/sim/tb_axi_s2.sv|
+!i113 0
+o+acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact -sv
+R8
+vtb_axi_stream
+2C:/Users/macmini4/git_repo/buffer/sim/tb_axi_stream.sv
+R2
+R11
+!i10b 1
+!s100 0mjmYHHQokeSCmncY7I0U2
+I^M=:KRiHBINn:Y3Tc[;Mi3
+S1
+R1
+R4
+8C:/Users/macmini4/git_repo/buffer/sim/tb_axi_stream.sv
+FC:/Users/macmini4/git_repo/buffer/sim/tb_axi_stream.sv
+!i122 5
+L0 6 142
+R5
+R6
+r1
+!s85 0
+31
+R10
+!s107 C:/Users/macmini4/git_repo/buffer/sim/tb_axi_stream.sv|
+!s90 -reportprogress|300|+acc|-L|mtiAvm|-L|mtiRnm|-L|mtiOvm|-L|mtiUvm|-L|mtiUPF|-L|infact|C:/Users/macmini4/git_repo/buffer/sim/tb_axi_stream.sv|
+!i113 0
+R7
+R8
