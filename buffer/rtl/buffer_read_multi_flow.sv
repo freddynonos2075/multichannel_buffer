@@ -7,7 +7,6 @@ module buffer_read_multi_flow #(
 	,parameter BUF_SEG_AW = 10     // number of segments
 	,parameter ADDR_WIDTH = BUF_SEG_AW + SEGMENT_SIZE_W
 	,parameter FLOWS_W = 3 // number of flow is 2**FLOWS_W
-	,parameter DWRR_BUFFER_W = FLOWS_W + 2 // put 4 entries per flow for a balanced weight distribution 
 	)(
 	 input logic                   clk
 	,input logic                   rstn
@@ -30,6 +29,7 @@ module buffer_read_multi_flow #(
 );
 
 localparam MAX_CREDIT_W = 6; // 2**MAX_CREDIT_W is the max number of credits
+localparam DWRR_BUFFER_W = FLOWS_W + 2 // put 4 entries per flow for a balanced weight distribution 
 // used pointer module
 // will need something based on tready, but the read latency of 0 will be a challenge
 // for now we will generate one pointer list per flow -- assume only 1 flow just yet
