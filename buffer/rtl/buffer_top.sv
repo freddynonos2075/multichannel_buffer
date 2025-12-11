@@ -7,7 +7,8 @@ module buffer_top #(
 	 parameter DATA_WIDTH = 1024
 	,parameter BUF_SEG_AW = 10 // this will represent the number of segments
 	,parameter SEGMENT_SIZE_W = 8 // log2 of number of bytes
-	,parameter SB_WIDTH = 10 // sideband information including flow number
+	,parameter FLOWS_W  = 3 // flow width
+	,parameter SB_WIDTH = FLOWS_W // sideband information including flow number
 ) (
 	// clock and reset
 	 input logic 				clk // single clock domain for this module
@@ -232,14 +233,17 @@ buffer_elem #(
 );
 
 
-buffer_read #(
+
+buffer_read_multi_flow #(
 	 .SEGMENT_SIZE_W (SEGMENT_SIZE_W)
 	,.BUF_SEG_AW     (BUF_SEG_AW)
+	,.FLOWS_W        (FLOWS_W)
 	) buffer_read ( 
 	 .clk                  (clk)
 	,.rstn                 (rstn)
 	,.used_pointer         (used_pointer)
 	,.used_pointer_valid   (used_pointer_valid)
+	,.used_pointer_flow    (sideband_in)
 						  
 	,.s_rready             (s_rready)    // t_ready coming from the read side (next element down the chain)
 	,.s_rvalid             (s_rvalid)    // so that we know when an item is consumed
