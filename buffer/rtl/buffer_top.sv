@@ -7,7 +7,8 @@ module buffer_top #(
 	 parameter DATA_WIDTH = 1024
 	,parameter BUF_SEG_AW = 10 // this will represent the number of segments
 	,parameter SEGMENT_SIZE_W = 8 // log2 of number of bytes
-	,parameter SB_WIDTH = 10 // sideband information including flow number
+	,parameter FLOWS_W  = 3 // flow width
+	,parameter SB_WIDTH = FLOWS_W // sideband information including flow number
 ) (
 	// clock and reset
 	 input logic 				clk // single clock domain for this module
@@ -66,7 +67,7 @@ logic pointers_rd_req_r;
 logic pointers_empty_r;
 
 // consumed pointers and release
-logic [BUF_SEG_AW:0]  used_pointer; // top bit is for the last indication
+logic [BUF_SEG_AW+SEGMENT_SIZE_W:0]  used_pointer; // top bit is for the last indication
 logic                   used_pointer_valid;
 //logic [BUF_SEG_AW-1:0]  freed_pointer;
 //logic                   freed_pointer_valid;
@@ -161,7 +162,7 @@ begin
 		valid_in <= 1'b0;
 		// consume the pointer
 		used_pointer_valid <= 1'b1;
-		used_pointer <= {s_wlast,current_pointer};
+		used_pointer <= {s_wlast,location_counter,current_pointer};
 	end
 	if ((rcvd_state == rcvd) && location_counter == {SEGMENT_SIZE_W{1'b1}}) begin // counter will wrap around -- end of segment
 		if (next_pointer_valid == 1'b1) begin // we have another pointer available
@@ -170,7 +171,7 @@ begin
 			rcvd_state <= idle;
 		end
 		used_pointer_valid <= 1'b1;
-		used_pointer <= {s_wlast,current_pointer};
+		used_pointer <= {s_wlast,location_counter,current_pointer};
 	end
 	
 	buffer_wr_addr <= {current_pointer,location_counter};
@@ -195,7 +196,7 @@ begin
 	    valid_in <= 1'b0;
 	    last_in <= 1'b0;
 	    sideband_in <= {SB_WIDTH{1'bx}};
-		used_pointer <= {BUF_SEG_AW{1'b0}};
+		used_pointer <= {(BUF_SEG_AW+SEGMENT_SIZE_W+1){1'b0}};
 		used_pointer_valid <= 1'b0;
 
     end
@@ -232,14 +233,17 @@ buffer_elem #(
 );
 
 
-buffer_read #(
+
+buffer_read_multi_flow #(
 	 .SEGMENT_SIZE_W (SEGMENT_SIZE_W)
 	,.BUF_SEG_AW     (BUF_SEG_AW)
+	,.FLOWS_W        (FLOWS_W)
 	) buffer_read ( 
 	 .clk                  (clk)
 	,.rstn                 (rstn)
 	,.used_pointer         (used_pointer)
 	,.used_pointer_valid   (used_pointer_valid)
+	,.used_pointer_flow    (sideband_in)
 						  
 	,.s_rready             (s_rready)    // t_ready coming from the read side (next element down the chain)
 	,.s_rvalid             (s_rvalid)    // so that we know when an item is consumed

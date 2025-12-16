@@ -3,6 +3,7 @@ vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact C:/Users/m
 vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact C:/Users/macmini4/git_repo/buffer/rtl/scfifo.sv
 vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact C:/Users/macmini4/git_repo/buffer/rtl/buffer_top.sv
 vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact C:/Users/macmini4/git_repo/buffer/rtl/buffer_read.sv
+vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact C:/Users/macmini4/git_repo/buffer/rtl/dwrr_credits.sv
 vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact C:/Users/macmini4/git_repo/buffer/rtl/buffer_read_multi_flow.sv
 vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact C:/Users/macmini4/git_repo/buffer/sim/tb_axi_stream.sv
 vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact -sv C:/Users/macmini4/git_repo/buffer/sim/tb_axi_s2.sv

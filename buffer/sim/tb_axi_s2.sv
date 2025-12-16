@@ -7,12 +7,13 @@ module tb_axi_s2;
   // ------------------------------------------------------------
   parameter DATA_W     = 32;
   parameter MAX_PKT_SZ = 128;     // bytes excluding pkt_num + flow byte
-  parameter NUM_PKTS   = 64;
+  parameter NUM_PKTS   = 4;
 
-	parameter int SB_WIDTH = 10; // sideband width in bits
 	parameter int BUF_SEG_AW = 5; // this will represent the number of segments 2**n
 	parameter int SEGMENT_SIZE_W = 3; // 2**n Bytes
 	localparam int BYTES_PER_BEAT = DATA_W / 8;
+	localparam int FLOWS_W = 3;
+	localparam int SB_WIDTH = FLOWS_W; // sideband width in bits
 
   // ------------------------------------------------------------
   // DUT Signals
@@ -20,16 +21,16 @@ module tb_axi_s2;
   logic clk, resetn;
 
   // AXIS Master TB→DUT
-  logic [DATA_W-1:0] s_axis_tdata;
-  logic              s_axis_tvalid;
-  logic              s_axis_tready;
-  logic              s_axis_tlast;
-
+  logic [DATA_W-1:0]   s_axis_tdata;
+  logic                s_axis_tvalid;
+  logic                s_axis_tready;
+  logic                s_axis_tlast;
+  logic [SB_WIDTH-1:0] s_axis_tsideband;	
   // AXIS Slave DUT→TB
-  logic [DATA_W-1:0] m_axis_tdata;
-  logic              m_axis_tvalid;
-  logic              m_axis_tready;
-  logic              m_axis_tlast;
+  logic [DATA_W-1:0]   m_axis_tdata;
+  logic                m_axis_tvalid;
+  logic                m_axis_tready;
+  logic                m_axis_tlast;
 
   // ------------------------------------------------------------
   // Clock and Reset
@@ -66,7 +67,8 @@ buffer_top #(
 	 .DATA_WIDTH (DATA_W)
 	,.BUF_SEG_AW (BUF_SEG_AW) // this will represent the number of segments 2**n
 	,.SEGMENT_SIZE_W (SEGMENT_SIZE_W) // 2**n Bytes
-	,.SB_WIDTH (SB_WIDTH) // sideband information including flow number in bits
+	,.FLOWS_W (FLOWS_W)
+	,.SB_WIDTH (FLOWS_W) // sideband information including flow number in bits
 ) DUT (
 	// clock and reset
 	 .clk  (clk)// single clock domain for this module
@@ -77,7 +79,7 @@ buffer_top #(
     ,.s_wready  (s_axis_tready)// Ready to accept data
     ,.s_wlast   (s_axis_tlast)// End of frame/packet 
     //,input  wire [(DATA_WIDTH/8)-1:0] s_wkeep // Byte qualifiers -- only bytes not used would be at the end of the packet
-    ,.s_wsideband ({SB_WIDTH{1'b0}})
+    ,.s_wsideband (s_axis_tsideband)
 	
 	// read side
     ,.s_rdata   (m_axis_tdata)// Data from master
@@ -150,6 +152,7 @@ buffer_top #(
     while (idx < pkt.data.size()) begin
       s_axis_tdata <= pkt.data[idx];
       s_axis_tlast <= (idx == pkt.data.size()-1);
+	  s_axis_tsideband <= pkt.flow_id;
 
       @(posedge clk);
       if (s_axis_tvalid && s_axis_tready) begin

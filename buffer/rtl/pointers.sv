@@ -90,6 +90,7 @@ endgenerate
         ,.overflow_checking       ("ON")
         ,.underflow_checking      ("ON")
         ,.use_eab                 ("ON")             // Use block RAMs
+		,.intended_device_family  ("agilex7")
     ) scfifo_component (
          .clock      (clk)
         ,.sclr       (~rstn)    // Active-high sync clear
