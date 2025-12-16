@@ -7,6 +7,13 @@ quietly virtual function -install /tb_axi_s2/DUT/buffer_read -env /tb_axi_s2 { &
 quietly virtual function -install {/tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[2]/used_pointers} -env /tb_axi_s2 { &{/tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[2]/used_pointers/rd_dout[4], /tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[2]/used_pointers/rd_dout[3], /tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[2]/used_pointers/rd_dout[2], /tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[2]/used_pointers/rd_dout[1], /tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[2]/used_pointers/rd_dout[0] }} pointer_number_2
 quietly virtual function -install {/tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[2]/used_pointers} -env /tb_axi_s2 { &{/tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[2]/used_pointers/rd_dout[7], /tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[2]/used_pointers/rd_dout[6], /tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[2]/used_pointers/rd_dout[5] }} used_locations_in_segment_2
 quietly virtual signal -install {/tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[2]/used_pointers} {/tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[2]/used_pointers/rd_dout[8]  } lsat_segment_for_packet_2
+quietly virtual signal -install /tb_axi_s2 {/tb_axi_s2/m_axis_tdata[31]  } rcvd_sop
+quietly virtual signal -install /tb_axi_s2 {/tb_axi_s2/m_axis_tdata[30]  } rcvd_flow
+quietly virtual signal -install /tb_axi_s2 {/tb_axi_s2/m_axis_tdata[29]  } rcvd_data
+quietly virtual function -install /tb_axi_s2 -env /tb_axi_s2/#INITIAL#276 { &{/tb_axi_s2/m_axis_tdata[15], /tb_axi_s2/m_axis_tdata[14], /tb_axi_s2/m_axis_tdata[13], /tb_axi_s2/m_axis_tdata[12], /tb_axi_s2/m_axis_tdata[11], /tb_axi_s2/m_axis_tdata[10], /tb_axi_s2/m_axis_tdata[9], /tb_axi_s2/m_axis_tdata[8] }} rcvd_pkt_number
+quietly virtual function -install /tb_axi_s2 -env /tb_axi_s2/#INITIAL#276 { &{/tb_axi_s2/m_axis_tdata[24], /tb_axi_s2/m_axis_tdata[23], /tb_axi_s2/m_axis_tdata[22], /tb_axi_s2/m_axis_tdata[21], /tb_axi_s2/m_axis_tdata[20], /tb_axi_s2/m_axis_tdata[19], /tb_axi_s2/m_axis_tdata[18], /tb_axi_s2/m_axis_tdata[17] }} rcvd_pkt_length
+quietly virtual function -install /tb_axi_s2 -env /tb_axi_s2/#INITIAL#276 { &{/tb_axi_s2/m_axis_tdata[7], /tb_axi_s2/m_axis_tdata[6], /tb_axi_s2/m_axis_tdata[5], /tb_axi_s2/m_axis_tdata[4], /tb_axi_s2/m_axis_tdata[3], /tb_axi_s2/m_axis_tdata[2], /tb_axi_s2/m_axis_tdata[1], /tb_axi_s2/m_axis_tdata[0] }} rcvd_cycle_number
+quietly virtual function -install /tb_axi_s2 -env /tb_axi_s2/#INITIAL#276 { &{/tb_axi_s2/m_axis_tdata[23], /tb_axi_s2/m_axis_tdata[22], /tb_axi_s2/m_axis_tdata[21], /tb_axi_s2/m_axis_tdata[20], /tb_axi_s2/m_axis_tdata[19], /tb_axi_s2/m_axis_tdata[18], /tb_axi_s2/m_axis_tdata[17], /tb_axi_s2/m_axis_tdata[16] }} rcvd_pkt_length2
 quietly WaveActivateNextPane {} 0
 add wave -noupdate /tb_axi_s2/clk
 add wave -noupdate /tb_axi_s2/resetn
@@ -15,10 +22,34 @@ add wave -noupdate /tb_axi_s2/s_axis_tvalid
 add wave -noupdate /tb_axi_s2/s_axis_tready
 add wave -noupdate /tb_axi_s2/s_axis_tlast
 add wave -noupdate /tb_axi_s2/s_axis_tsideband
+add wave -noupdate /tb_axi_s2/rcvd_sop
+add wave -noupdate /tb_axi_s2/rcvd_flow
+add wave -noupdate /tb_axi_s2/rcvd_data
+add wave -noupdate /tb_axi_s2/rcvd_pkt_number
+add wave -noupdate /tb_axi_s2/rcvd_cycle_number
+add wave -noupdate /tb_axi_s2/rcvd_pkt_length2
 add wave -noupdate /tb_axi_s2/m_axis_tdata
 add wave -noupdate /tb_axi_s2/m_axis_tvalid
 add wave -noupdate /tb_axi_s2/m_axis_tready
 add wave -noupdate /tb_axi_s2/m_axis_tlast
+TreeUpdate [SetDefaultTree]
+quietly WaveActivateNextPane
+add wave -noupdate /tb_axi_s2/DUT/next_pointer
+add wave -noupdate /tb_axi_s2/DUT/next_pointer_valid
+add wave -noupdate /tb_axi_s2/DUT/current_pointer
+add wave -noupdate /tb_axi_s2/DUT/current_pointer_valid
+add wave -noupdate /tb_axi_s2/DUT/rcvd_state
+add wave -noupdate /tb_axi_s2/DUT/location_counter
+add wave -noupdate /tb_axi_s2/DUT/rving_packet
+add wave -noupdate /tb_axi_s2/DUT/pointers_empty
+add wave -noupdate /tb_axi_s2/DUT/pointers_init_done
+add wave -noupdate /tb_axi_s2/DUT/pointers_wr_req
+add wave -noupdate /tb_axi_s2/DUT/pointers_wr_din
+add wave -noupdate /tb_axi_s2/DUT/pointers_rd_req
+add wave -noupdate /tb_axi_s2/DUT/pointers_rd_req_r
+add wave -noupdate /tb_axi_s2/DUT/pointers_empty_r
+add wave -noupdate /tb_axi_s2/DUT/used_pointer
+add wave -noupdate /tb_axi_s2/DUT/used_pointer_valid
 TreeUpdate [SetDefaultTree]
 quietly WaveActivateNextPane
 add wave -noupdate /tb_axi_s2/DUT/data_in
@@ -87,7 +118,7 @@ add wave -noupdate /tb_axi_s2/DUT/buffer_read/dww_credits/fifo_wr_req
 add wave -noupdate /tb_axi_s2/DUT/buffer_read/dww_credits/fifo_wr_din
 add wave -noupdate /tb_axi_s2/DUT/buffer_read/dww_credits/ram_inst/altera_syncram_inst/mem_data
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {764087 ps} 0}
+WaveRestoreCursors {{Cursor 1} {645000 ps} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 293
 configure wave -valuecolwidth 100
@@ -103,4 +134,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ps
 update
-WaveRestoreZoom {0 ps} {2100 ns}
+WaveRestoreZoom {0 ps} {3054832 ps}
