@@ -67,7 +67,7 @@ logic pointers_rd_req_r;
 logic pointers_empty_r;
 
 // consumed pointers and release
-logic [BUF_SEG_AW:0]  used_pointer; // top bit is for the last indication
+logic [BUF_SEG_AW+SEGMENT_SIZE_W:0]  used_pointer; // top bit is for the last indication
 logic                   used_pointer_valid;
 //logic [BUF_SEG_AW-1:0]  freed_pointer;
 //logic                   freed_pointer_valid;
@@ -162,7 +162,7 @@ begin
 		valid_in <= 1'b0;
 		// consume the pointer
 		used_pointer_valid <= 1'b1;
-		used_pointer <= {s_wlast,current_pointer};
+		used_pointer <= {s_wlast,location_counter,current_pointer};
 	end
 	if ((rcvd_state == rcvd) && location_counter == {SEGMENT_SIZE_W{1'b1}}) begin // counter will wrap around -- end of segment
 		if (next_pointer_valid == 1'b1) begin // we have another pointer available
@@ -171,7 +171,7 @@ begin
 			rcvd_state <= idle;
 		end
 		used_pointer_valid <= 1'b1;
-		used_pointer <= {s_wlast,current_pointer};
+		used_pointer <= {s_wlast,location_counter,current_pointer};
 	end
 	
 	buffer_wr_addr <= {current_pointer,location_counter};
@@ -196,7 +196,7 @@ begin
 	    valid_in <= 1'b0;
 	    last_in <= 1'b0;
 	    sideband_in <= {SB_WIDTH{1'bx}};
-		used_pointer <= {BUF_SEG_AW{1'b0}};
+		used_pointer <= {(BUF_SEG_AW+SEGMENT_SIZE_W+1){1'b0}};
 		used_pointer_valid <= 1'b0;
 
     end

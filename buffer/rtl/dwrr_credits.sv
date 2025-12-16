@@ -149,7 +149,7 @@ endgenerate
         .clocken2        (1'b1),
         .clocken3        (1'b1),
 
-        .byteena_a       ('b1),
+        //.byteena_a       ({(FLOW_W/8){1'b1}}),
         .rden_a          (1'b1),
 
         // Unused dual-port signals
