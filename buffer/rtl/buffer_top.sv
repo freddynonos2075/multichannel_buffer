@@ -78,6 +78,12 @@ logic [BUF_SEG_AW+SEGMENT_SIZE_W-1:0] buffer_rd_addr;
 logic [BUF_SEG_AW+SEGMENT_SIZE_W-1:0] buffer_wr_addr; // width is #segment + size of segment
 logic [DATA_WIDTH:0] buffer_dout;
 
+// skid buffer to match latency
+logic [DATA_WIDTH-1:0] s_rdata_lat1;
+logic                  s_rvalid_lat1;
+logic                  s_rready_lat1;
+logic                  s_rlast_lat1;
+
 
 
 assign s_wready = (current_pointer_valid || (rcvd_state == rcvd) ) && pointers_init_done; // should allow traffic if we are currently in a packet or if we have space available. THis will probably be broken with the read latency of 0 -- to be checked
@@ -245,8 +251,8 @@ buffer_read_multi_flow #(
 	,.used_pointer_valid   (used_pointer_valid)
 	,.used_pointer_flow    (sideband_in)
 						  
-	,.s_rready             (s_rready)    // t_ready coming from the read side (next element down the chain)
-	,.s_rvalid             (s_rvalid)    // so that we know when an item is consumed
+	,.s_rready             (s_rready_lat1)    // t_ready coming from the read side (next element down the chain)
+	,.s_rvalid             (s_rvalid_lat1)    // so that we know when an item is consumed
 	,.s_rlast              (buffer_dout[DATA_WIDTH])   // last element of the packet
 						  
 	,.freed_pointer        (pointers_wr_din)
@@ -257,14 +263,30 @@ buffer_read_multi_flow #(
 	
 );
 
+rd_latency1_to_0 #(
+   .WIDTH (DATA_WIDTH+2)
+) skid_buffer (
+ .clk         (clk) 
+,.rst_n       (rstn)
+
+,.in_rd_en    (s_rready_lat1)
+//,.in_rd_valid (s_rvalid_lat1)
+,.in_rd_data  ({s_rvalid_lat1,s_rlast_lat1,s_rdata_lat1})
+
+,.out_rd_en   (s_rready)
+//,.out_rd_valid(s_rvalid)
+,.out_rd_data ({s_rvalid,s_rlast,s_rdata})
+);
+
+
 
 // reading side, will create a small module to find the right data, as this will evolve depending on complexity
 // we need to give the used pointers and the value of the flow.
 // the block will then read from the buffer when the tready is asserted (possibly start by dumping the data)
 
-// unused pins:
-assign s_rdata = buffer_dout[DATA_WIDTH-1:0];
-assign s_rlast = buffer_dout[DATA_WIDTH];
+
+assign s_rdata_lat1 = buffer_dout[DATA_WIDTH-1:0];
+assign s_rlast_lat1 = buffer_dout[DATA_WIDTH];
 assign s_rkeep = {(DATA_WIDTH/8){1'b0}};
 
 endmodule

@@ -7,7 +7,7 @@ module tb_axi_s2;
   // ------------------------------------------------------------
   parameter DATA_W     = 32;
   parameter MAX_PKT_SZ = 128;     // bytes excluding pkt_num + flow byte
-  parameter NUM_PKTS   = 24;
+  parameter NUM_PKTS   = 257;
 
 	parameter int BUF_SEG_AW = 5; // this will represent the number of segments 2**n
 	parameter int SEGMENT_SIZE_W = 3; // 2**n Bytes

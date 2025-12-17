@@ -168,7 +168,7 @@ always_ff @(posedge clk) begin
 					// consume a credit now?
 					rcvd_state <= rcvd_with_sel;
 					rr_counter <= rr_counter + 1'b1;
-					data_valid <= 1'b0;
+					data_valid <= 1'b1;
 				end else begin
 				end
 				location_counter <= location_counter + 1'b1;
