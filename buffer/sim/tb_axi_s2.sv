@@ -7,7 +7,7 @@ module tb_axi_s2;
   // ------------------------------------------------------------
   parameter DATA_W     = 32;
   parameter MAX_PKT_SZ = 128;     // bytes excluding pkt_num + flow byte
-  parameter NUM_PKTS   = 64;
+  parameter NUM_PKTS   = 24;
 
 	parameter int BUF_SEG_AW = 5; // this will represent the number of segments 2**n
 	parameter int SEGMENT_SIZE_W = 3; // 2**n Bytes
@@ -119,30 +119,36 @@ buffer_top #(
   // ------------------------------------------------------------
   function packet_t generate_packet(int id);
     
-	packet_t pkt;
+	static packet_t pkt;
     automatic int payload_len = $urandom_range(64/BYTES_PER_BEAT, MAX_PKT_SZ/BYTES_PER_BEAT); // these are clock cycles rather than bytes
+	static int flow_id;
 	
+	pkt.data = {};
+	pkt.pkt_id = -1;
+
 	pkt.pkt_id = id;
-    pkt.flow_id = $urandom_range(0, (2**FLOWS_W)-1); // 1-byte flow ID
+    flow_id = $urandom_range(0, (2**FLOWS_W)-1);
+	pkt.flow_id = flow_id; // 1-byte flow ID
     
     //pkt.data = new[payload_len + 2];
 
 	
     // Byte 0: packet number
-    pkt.data[0] = {8'h80,payload_len[7:0],byte'(id & 8'hFF),byte'(id & 8'hFF)};
+    pkt.data[0] = {4'h8,flow_id[3:0],payload_len[7:0],id[7:0],id[7:0]};
 	
 
     // Byte 1: flow ID
-    pkt.data[1] = {8'h40,payload_len[7:0],byte'(id & 8'hFF),pkt.flow_id};
+    pkt.data[1] = {4'h4,flow_id[3:0],payload_len[7:0],id[7:0],flow_id[7:0]};
 
 	//pkt.data.size = payload_len;
-	
+	//$fdisplay(fd_send,"------- GENERARING PACKET %d payload length %d ----------------",id,payload_len);
     // Remaining bytes: random payload
     for (int i = 2; i < payload_len; i++) begin
       //pkt.data[i] = $urandom();
-		pkt.data[i] = {8'h2f,payload_len[7:0],byte'(id & 8'hFF),i[7:0]};
+	   	pkt.data[i] = {4'h2,flow_id[3:0],payload_len[7:0],id[7:0],i[7:0]};
 	end
     //$display("Task generate packet of size  %0d -- %0d -- flow id %0x -- packet number %0x ...", payload_len, pkt.data.size(), pkt.data[1], pkt.data[0]);
+	//$fdisplay(fd_send,"packet generated: %h",pkt);
     return pkt;
   endfunction
 
@@ -150,22 +156,22 @@ buffer_top #(
   // AXI-S Send Task (TB → DUT)
   // ------------------------------------------------------------
   task send_packet(packet_t pkt);
-    static int idx;
+    static int idx_s;
 
-	idx <= 0;
+	idx_s <= 0;
     @(posedge clk);
     s_axis_tvalid <= 1;
     //$display("Task Send packet of size  %0d ...", pkt.data.size());
 	$fdisplay(fd_send, "***** packet %d flow %0x size %d *****", pkt.pkt_id,pkt.flow_id, pkt.data.size());
-    while (idx < pkt.data.size()) begin
-      s_axis_tdata <= pkt.data[idx];
-      s_axis_tlast <= (idx == pkt.data.size()-1);
+    while (idx_s < pkt.data.size()) begin
+      s_axis_tdata <= pkt.data[idx_s];
+      s_axis_tlast <= (idx_s == pkt.data.size()-1);
 	  s_axis_tsideband <= pkt.flow_id;
 
       @(posedge clk);
       if (s_axis_tvalid && s_axis_tready) begin
-		$fdisplay(fd_send, "%d data %x", idx,pkt.data[idx]);
-        idx++;
+		$fdisplay(fd_send, "%d data %x", idx_s,pkt.data[idx_s]);
+        idx_s++;
 	  end
     end
 
@@ -178,11 +184,11 @@ buffer_top #(
   // ------------------------------------------------------------
   task receive_packet(output packet_t pkt);
 	static int count = 0;
-	static int idx;
+	static int idx_r;
 	
     pkt.data = {};
     pkt.pkt_id = -1;
-    idx = 0;
+    idx_r = 0;
 	wait(m_axis_tvalid);
 
 	count = 0;
@@ -200,9 +206,9 @@ buffer_top #(
     pkt.pkt_id = pkt.data[0][15:8];
     pkt.flow_id = pkt.data[1];
 	$fdisplay(fd_rcvd, "***** packet %d flow %0x size %d *****", pkt.pkt_id,pkt.flow_id, pkt.data.size());
-	while (idx < pkt.data.size()) begin
-		$fdisplay(fd_rcvd, "%d data %x", idx,pkt.data[idx]);
-		idx++;
+	while (idx_r < pkt.data.size()) begin
+		$fdisplay(fd_rcvd, "%d data %x", idx_r,pkt.data[idx_r]);
+		idx_r++;
 	end
 	//$display("************ finished receiving packet %d flow %0x size %d ****************", pkt.pkt_id,pkt.flow_id, pkt.data.size());
   endtask
@@ -295,7 +301,7 @@ buffer_top #(
 		  packet_t pkt;
           pkt = generate_packet(i);
           sent_pkts[i] = pkt;
-          $display(">>>>>>> TB: Sending pkt %0d, flow=%0d, size=%0d",
+          $display(">>>>>>> TB: Sending pkt %0d, flow=%0d, size=%0d ",
                    i, pkt.flow_id, pkt.data.size());
           send_packet(pkt);
           repeat($urandom_range(1,5)) @(posedge clk);
@@ -310,8 +316,8 @@ buffer_top #(
           packet_t pkt;
           receive_packet(pkt);
           received_pkts[pkt.pkt_id] = pkt;
-          $display("<<<<<<< TB: Received pkt %0d, flow=%0d, size=%0d",
-                   pkt.pkt_id, pkt.flow_id, pkt.data.size());
+          $display("<<<<<<< TB: Received pkt %0d, flow=%0d, size=%0d -- remaining %d packets",
+                   pkt.pkt_id, pkt.flow_id, pkt.data.size(),NUM_PKTS-r-1);
         end
       end
     join
