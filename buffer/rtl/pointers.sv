@@ -25,7 +25,7 @@ localparam int FIFO_DEPTH = 2** DATA_WIDTH;
 
 logic [DATA_WIDTH-1:0] pointer_counter;
 logic                     fifo_wr_req;         // Write enable
-logic [DATA_WIDTH:0]      fifo_wr_din;        // Write data
+logic [DATA_WIDTH-1:0]      fifo_wr_din;        // Write data
 
 
  
@@ -85,7 +85,7 @@ endgenerate
         ,.lpm_numwords            (FIFO_DEPTH)
         ,.lpm_showahead           ("OFF")            // Data available immediately
         ,.lpm_type                ("scfifo")
-        ,.lpm_width               (DATA_WIDTH)  // +1 for TLAST bit
+        ,.lpm_width               (DATA_WIDTH)  
         ,.lpm_widthu              ($clog2(FIFO_DEPTH))
         ,.overflow_checking       ("ON")
         ,.underflow_checking      ("ON")
@@ -94,6 +94,7 @@ endgenerate
     ) scfifo_component (
          .clock      (clk)
         ,.sclr       (~rstn)    // Active-high sync clear
+		,.aclr       (1'b0)
         ,.data       (fifo_wr_din)
         ,.wrreq      (fifo_wr_req)
         ,.rdreq      (rd_req)
@@ -101,5 +102,9 @@ endgenerate
         ,.empty      (fifo_empty)
         ,.full       (full)
 		,.usedw       (usedw)
+		,.almost_empty ()
+		,.almost_full  ()
+		,.eccstatus ()
+		
     );
 endmodule

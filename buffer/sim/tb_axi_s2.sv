@@ -238,7 +238,7 @@ buffer_top #(
 
       s = sent_pkts[id];
       r = received_pkts[id];
-	  $fdisplay(fd_rcvd,"------------------------------------------\nChecking packet %x \n----- sent: %x \n----- rcvd: %x",sent_pkts[id],s.data,r.data );
+	  $fdisplay(fd_rcvd,"------------------------------------------\nChecking packet %p \n----- sent: %p \n----- rcvd: %p",sent_pkts[id],s.data,r.data );
 
       // Length check
       if (s.data.size() != r.data.size()) begin
