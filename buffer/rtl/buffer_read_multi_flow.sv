@@ -101,116 +101,121 @@ dwrr_credits #(
 
 always_ff @(posedge clk) begin
 	pointers_rd_req <= {(2**FLOWS_W){1'b0}};
-	if (rcvd_state == idle_no_sel) begin //situation where we have not received traffic yet -- check if the current RR counter has data or not, if not move to the next
-		if (pointers_emtpy[rr_counter] == 1'b0 && flow_credits[rr_counter] != 0) begin // this is our next selection
-			next_selected_flow <= rr_counter;
-			pointers_rd_req[rr_counter]<= 1'b1;
-			next_flow_valid <= 1'b1;
-			// consume a credit now?
-			rcvd_state <= idle_with_sel;
-		end
-		rr_counter <= rr_counter + 1'b1;
-		data_valid <= 1'b0;
-	end
-	if (rcvd_state == idle_with_sel) begin // as we have a selection, we can move to get the data (probably could have done that quicker in the idle_no_sel
-		current_selected_flow <= next_selected_flow;
-		current_flow_valid <= 1'b1;
-		next_flow_valid <= 1'b0;
-		next_selected_flow <= {FLOWS_W{1'bx}};
-		rcvd_state <= idle_with_sel2;
-		location_counter <= {SEGMENT_SIZE_W{1'b0}};
-	end
-
-	if (rcvd_state == idle_with_sel2) begin // as we have a selection, we can move to get the data (probably could have done that quicker in the idle_no_sel
-		rcvd_state <= rcvd_no_sel;
-		data_valid <= 1'b1;
-		pointers_current <= pointers_rd_out[current_selected_flow];
-	end
-	
-	if (rcvd_state == rcvd_no_sel) begin // receive until end of segment or end of packet -- need to select the next segment. Either the same flow if not end of packet or new flow
-		data_valid <= 1'b1;
-		// if (location_counter[1:0] == 2'b10 && pointers_current[BUF_SEG_AW] == 1'b0) begin // not the last segment of the packet and so pre-fetch the next pointer
-			// pointers_rd_req[current_selected_flow]<= 1'b1;
-		// end
-		// if (pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W-1:BUF_SEG_AW] == location_counter) begin // last word of the packet 
-			// location_counter <= {SEGMENT_SIZE_W{1'b0}};
-			// rcvd_state <= idle_no_sel;
-			// data_valid <= 1'b0;
-		// end else 
-		if (pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W-1:BUF_SEG_AW] == location_counter && pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W] == 1'b1) begin // this is the last cycle for this packet
-			location_counter <= {SEGMENT_SIZE_W{1'b0}};
-			rcvd_state <= idle_no_sel;
-			data_valid <= 1'b0;
-		end else if (location_counter == {SEGMENT_SIZE_W{1'b1}} && pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W] == 1'b0) begin // end of segment, more to come
-			// stay on the same flow
-			if (pointers_emtpy[current_selected_flow] == 1'b1) begin // temporarily ran out of data
-				rcvd_state <= idle_no_data_no_sel;
-				data_valid <= 1'b0;
-			end else begin
-				//pointers_current <= pointers_rd_out[current_selected_flow];
-				rcvd_state <= idle_with_sel;
-				data_valid <= 1'b0;
-				pointers_rd_req[current_selected_flow]<= 1'b1;
-				next_selected_flow <= current_selected_flow;
-			end
-			location_counter <= {SEGMENT_SIZE_W{1'b0}}; // counter goes back to 0 in both cases
-		end else begin // mid segment
-			if (pointers_emtpy[rr_counter] == 1'b0 && flow_credits[rr_counter] != 0 && pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W] == 1'b1) begin // this is our next selection -- only change if we are on the last segment of the packet
+	freed_pointer_valid <= 1'b0;
+	if (s_rready == 1) begin // will have to do something more subtle than that, we can still look for new flows
+		if (rcvd_state == idle_no_sel) begin //situation where we have not received traffic yet -- check if the current RR counter has data or not, if not move to the next
+			if (pointers_emtpy[rr_counter] == 1'b0 && flow_credits[rr_counter] != 0) begin // this is our next selection
 				next_selected_flow <= rr_counter;
-				next_flow_valid <= 1'b1;
 				pointers_rd_req[rr_counter]<= 1'b1;
+				next_flow_valid <= 1'b1;
 				// consume a credit now?
-				rcvd_state <= rcvd_with_sel;
-				rr_counter <= rr_counter + 1'b1;
-				data_valid <= 1'b0;
-			end else begin
+				rcvd_state <= idle_with_sel;
 			end
-			location_counter <= location_counter + 1'b1;
-		end
-	end
-	
-	if (rcvd_state == rcvd_with_sel) begin // receive until end of segment or end of packet
-		data_valid <= 1'b1;
-		if (pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W-1:BUF_SEG_AW] == location_counter) begin // last word of the packet
-			location_counter <= {SEGMENT_SIZE_W{1'b0}};
-			rcvd_state <= idle_with_sel;
+			rr_counter <= rr_counter + 1'b1;
 			data_valid <= 1'b0;
-			pointers_current <= pointers_rd_out[next_selected_flow];
-		end else if (location_counter == {SEGMENT_SIZE_W{1'b1}} && pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W] == 1'b1) begin // this is the last, we just don't know it yet
-			location_counter <= {SEGMENT_SIZE_W{1'b0}};
-			rcvd_state <= idle_with_sel;
-			data_valid <= 1'b0;
-			pointers_current <= pointers_rd_out[next_selected_flow];
-		end else if (location_counter == {SEGMENT_SIZE_W{1'b1}} && pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W] == 1'b0) begin // end of segment
-			// stay on the same flow
-			if (pointers_emtpy[current_selected_flow] == 1'b1) begin // temporarily ran out of data
-				rcvd_state <= idle_no_data_with_sel;
-				data_valid <= 1'b0;
-			end else begin
-				rcvd_state <= rcvd_no_sel;
-				next_flow_valid <= 1'b0;
-				data_valid <= 1'b0;
-			end
-		end else begin // mid segment
-			location_counter <= location_counter + 1'b1;
 		end
-	end
-	
-	if (rcvd_state == idle_no_data_no_sel) begin // wait for the buffer to continue storing the current packet (this state should probably not occur)
-		if (pointers_emtpy[current_selected_flow] == 1'b0) begin //resume
+		if (rcvd_state == idle_with_sel) begin // as we have a selection, we can move to get the data (probably could have done that quicker in the idle_no_sel
+			current_selected_flow <= next_selected_flow;
+			current_flow_valid <= 1'b1;
+			next_flow_valid <= 1'b0;
+			next_selected_flow <= {FLOWS_W{1'bx}};
+			rcvd_state <= idle_with_sel2;
+			location_counter <= {SEGMENT_SIZE_W{1'b0}};
+		end
+
+		if (rcvd_state == idle_with_sel2) begin // as we have a selection, we can move to get the data (probably could have done that quicker in the idle_no_sel
 			rcvd_state <= rcvd_no_sel;
 			data_valid <= 1'b1;
+			pointers_current <= pointers_rd_out[current_selected_flow];
 		end
-	end
-	
-	if (rcvd_state == idle_no_data_with_sel) begin // wait for the buffer to continue storing the current packet (this state should probably not occur)
-		if (pointers_emtpy[current_selected_flow] == 1'b0) begin //resume
-			rcvd_state <= rcvd_with_sel;
+		
+		if (rcvd_state == rcvd_no_sel) begin // receive until end of segment or end of packet -- need to select the next segment. Either the same flow if not end of packet or new flow
 			data_valid <= 1'b1;
+			// if (location_counter[1:0] == 2'b10 && pointers_current[BUF_SEG_AW] == 1'b0) begin // not the last segment of the packet and so pre-fetch the next pointer
+				// pointers_rd_req[current_selected_flow]<= 1'b1;
+			// end
+			// if (pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W-1:BUF_SEG_AW] == location_counter) begin // last word of the packet 
+				// location_counter <= {SEGMENT_SIZE_W{1'b0}};
+				// rcvd_state <= idle_no_sel;
+				// data_valid <= 1'b0;
+			// end else 
+			if (pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W-1:BUF_SEG_AW] == location_counter && pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W] == 1'b1) begin // this is the last cycle for this packet
+				location_counter <= {SEGMENT_SIZE_W{1'b0}};
+				rcvd_state <= idle_no_sel;
+				data_valid <= 1'b0;
+				freed_pointer <= pointers_current[BUF_SEG_AW-1:0];
+				freed_pointer_valid <= 1'b1;
+			end else if (pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W-1:BUF_SEG_AW] == location_counter  && pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W] == 1'b0) begin // end of segment, more to come
+				// stay on the same flow
+				if (pointers_emtpy[current_selected_flow] == 1'b1) begin // temporarily ran out of data
+					rcvd_state <= idle_no_data_no_sel;
+					data_valid <= 1'b0;
+				end else begin
+					//pointers_current <= pointers_rd_out[current_selected_flow];
+					rcvd_state <= idle_with_sel;
+					data_valid <= 1'b0;
+					pointers_rd_req[current_selected_flow]<= 1'b1;
+					next_selected_flow <= current_selected_flow;
+				end
+				location_counter <= {SEGMENT_SIZE_W{1'b0}}; // counter goes back to 0 in both cases
+				freed_pointer <= pointers_current[BUF_SEG_AW-1:0];
+				freed_pointer_valid <= 1'b1;
+			end else begin // mid segment
+				if (pointers_emtpy[rr_counter] == 1'b0 && flow_credits[rr_counter] != 0 && pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W] == 1'b1) begin // this is our next selection -- only change if we are on the last segment of the packet
+					next_selected_flow <= rr_counter;
+					next_flow_valid <= 1'b1;
+					pointers_rd_req[rr_counter]<= 1'b1;
+					// consume a credit now?
+					rcvd_state <= rcvd_with_sel;
+					rr_counter <= rr_counter + 1'b1;
+					data_valid <= 1'b1;
+				end else begin
+				end
+				location_counter <= location_counter + 1'b1;
+			end
 		end
-	end
-	s_rvalid <= data_valid;
-	
+		
+		if (rcvd_state == rcvd_with_sel) begin // receive until end of segment or end of packet
+			data_valid <= 1'b1;
+			if (pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W-1:BUF_SEG_AW] == location_counter  && pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W] == 1'b1) begin // this is the last, we just don't know it yet
+				location_counter <= {SEGMENT_SIZE_W{1'b0}};
+				rcvd_state <= idle_with_sel;
+				data_valid <= 1'b0;
+				pointers_current <= pointers_rd_out[next_selected_flow];
+				freed_pointer <= pointers_current[BUF_SEG_AW-1:0];
+				freed_pointer_valid <= 1'b1;
+			end else if (pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W-1:BUF_SEG_AW] == location_counter  && pointers_current[BUF_SEG_AW+SEGMENT_SIZE_W] == 1'b0) begin // end of segment
+				// stay on the same flow
+				if (pointers_emtpy[current_selected_flow] == 1'b1) begin // temporarily ran out of data
+					rcvd_state <= idle_no_data_with_sel;
+					data_valid <= 1'b0;
+				end else begin
+					rcvd_state <= rcvd_no_sel;
+					next_flow_valid <= 1'b0;
+					data_valid <= 1'b0;
+				end
+				freed_pointer <= pointers_current[BUF_SEG_AW-1:0];
+				freed_pointer_valid <= 1'b1;
+			end else begin // mid segment
+				location_counter <= location_counter + 1'b1;
+			end
+		end
+		
+		if (rcvd_state == idle_no_data_no_sel) begin // wait for the buffer to continue storing the current packet (this state should probably not occur)
+			if (pointers_emtpy[current_selected_flow] == 1'b0) begin //resume
+				rcvd_state <= rcvd_no_sel;
+				data_valid <= 1'b1;
+			end
+		end
+		
+		if (rcvd_state == idle_no_data_with_sel) begin // wait for the buffer to continue storing the current packet (this state should probably not occur)
+			if (pointers_emtpy[current_selected_flow] == 1'b0) begin //resume
+				rcvd_state <= rcvd_with_sel;
+				data_valid <= 1'b1;
+			end
+		end
+		s_rvalid <= data_valid;
+	end		
 	if (rstn == 1'b0) begin
 		rcvd_state <= idle_no_sel;
 		rr_counter <= {FLOWS_W{1'b0}};
@@ -221,12 +226,14 @@ always_ff @(posedge clk) begin
 		location_counter <= {SEGMENT_SIZE_W{1'b0}};
 		data_valid <= 1'b0;
 		s_rvalid <= 1'b0;
+		freed_pointer_valid <= 1'b0;
 		pointers_current <= {(BUF_SEG_AW+SEGMENT_SIZE_W+1){1'b1}};
 		for (int j = 0; j < 2**FLOWS_W; j++) begin
 			flow_credits[j] <= {1'b0,{(MAX_CREDIT_W-1){1'b1}}};
 		end
 
 	end
+
 end
 
 

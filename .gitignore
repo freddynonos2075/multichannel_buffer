@@ -2,6 +2,7 @@ buffer/questa/work
 buffer/questa/vsim.wlf
 buffer/questa/transcript
 buffer/questa/wlf*
+buffer/questa/*.log
 buffer/quartus/dni
 buffer/quartus/output_files
 buffer/quartus/qdb
