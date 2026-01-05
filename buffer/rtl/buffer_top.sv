@@ -28,7 +28,9 @@ module buffer_top #(
     ,output logic                  s_rlast   // End of frame/packet 
     ,output logic [(DATA_WIDTH/8)-1:0] s_rkeep // Byte qualifiers -- only bytes not used would be at the end of the packet
 		
-	// control TBD
+	// control
+	
+	,axi4lite_if.slave            csr
 	
 );
 
@@ -261,6 +263,7 @@ buffer_read_multi_flow #(
 	,.p_tready             ()  // probably not needed, we are managing the read from here, was thinking of sending this to the buffer itself, but it makes no sense
 	,.b_raddr              (buffer_rd_addr)
 	
+	,.csr                  (csr)
 );
 
 rd_latency1_to_0 #(

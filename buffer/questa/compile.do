@@ -8,6 +8,7 @@ vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact C:/Users/m
 vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact C:/Users/macmini4/git_repo/buffer/rtl/rd_latency1_to_0.sv
 vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact C:/Users/macmini4/git_repo/buffer/sim/tb_axi_stream.sv
 vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact -sv C:/Users/macmini4/git_repo/buffer/sim/tb_axi_s2.sv
+vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact C:/Users/macmini4/git_repo/buffer/rtl/axi4lite_if.sv
 
 #vsim -onfinish stop -L altera_mf_ver -L work tb_axi_stream
 vsim -onfinish stop -L altera_mf_ver -L work tb_axi_s2
