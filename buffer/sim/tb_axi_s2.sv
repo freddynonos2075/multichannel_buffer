@@ -7,7 +7,7 @@ module tb_axi_s2;
   // ------------------------------------------------------------
   parameter DATA_W     = 32;
   parameter MAX_PKT_SZ = 128;     // bytes excluding pkt_num + flow byte
-  parameter NUM_PKTS   = 257;
+  parameter NUM_PKTS   = 512;
 
 	parameter int BUF_SEG_AW = 5; // this will represent the number of segments 2**n
 	parameter int SEGMENT_SIZE_W = 3; // 2**n Bytes
@@ -141,7 +141,7 @@ buffer_top #(
 
 	
     // Byte 0: packet number
-    pkt.data[0] = {4'h8,flow_id[3:0],payload_len[7:0],id[7:0],id[7:0]};
+    pkt.data[0] = {4'h8,flow_id[3:0],payload_len[7:0],id[15:0]};
 	
 
     // Byte 1: flow ID
@@ -210,7 +210,7 @@ buffer_top #(
     end while (!(m_axis_tlast && m_axis_tvalid)); // should be last and valid
 	// Extract packet number and flow_id
 
-    pkt.pkt_id = pkt.data[0][15:8];
+    pkt.pkt_id = pkt.data[0][15:0];
     pkt.flow_id = pkt.data[1];
 	$fdisplay(fd_rcvd, "***** packet %d flow %0x size %d *****", pkt.pkt_id,pkt.flow_id, pkt.data.size());
 	while (idx_r < pkt.data.size()) begin
@@ -441,7 +441,7 @@ buffer_top #(
 	$display("CSR READ: Read data = %h", rdata);
 
     #20;
-    $finish;
+    //$finish;
   end
 
 
