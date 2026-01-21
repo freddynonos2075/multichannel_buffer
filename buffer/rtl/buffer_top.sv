@@ -111,7 +111,7 @@ begin
 			end
 		end
 		// last cycle of the word/segment so try to get a new pointer
-		if ((rcvd_state == rcvd) && s_wvalid && s_wlast) begin
+		if (/*(rcvd_state == rcvd) &&*/ s_wvalid && s_wlast) begin
 			if (next_pointer_valid == 1'b1) begin
 				current_pointer_valid <= 1'b1;
 				current_pointer <= next_pointer;
@@ -121,7 +121,7 @@ begin
 			end
 		end
 		// if we reach out the last bit of the location_counter
-		if ((rcvd_state == rcvd) && location_counter == {SEGMENT_SIZE_W{1'b1}}) begin // counter will wrap around
+		if (/*(rcvd_state == rcvd) &&*/ location_counter == {SEGMENT_SIZE_W{1'b1}} && s_wvalid) begin // counter will wrap around
 			// 2 cases, either we have a pointer available or we have not. For now let's assume we always have a pointer.
 			if (next_pointer_valid == 1'b1) begin
 				current_pointer_valid <= 1'b1;
@@ -155,35 +155,37 @@ begin
 	// back to back packets will for now not being supported and we assume packets fit in a single container -- both will need to change
 	used_pointer_valid <= 1'b0;
 	
-	if  (current_pointer_valid == 1'b1 && (rcvd_state == idle) ) begin
+/*	if  (current_pointer_valid == 1'b1 && (rcvd_state == idle) ) begin
 		rcvd_state <= rcvd;
 		if (s_wvalid == 1'b1) begin
 			location_counter <= location_counter + 1'b1;
 		end
 	end
-	if (rcvd_state == rcvd && s_wvalid == 1'b1) begin // will need to add a next segment part
+	*/
+	if (/*rcvd_state == rcvd &&*/ s_wvalid == 1'b1 && current_pointer_valid) begin // will need to add a next segment part
 		location_counter <= location_counter + 1'b1;
 	end
-	if ((rcvd_state == rcvd) && s_wvalid && s_wlast) begin // this clearly will not do back to back, will also fail for packets using multiple segments
+	if (/*(rcvd_state == rcvd) &&*/ s_wvalid && s_wlast && current_pointer_valid) begin // this clearly will not do back to back, will also fail for packets using multiple segments
 		rcvd_state <= idle;
 		location_counter <= {SEGMENT_SIZE_W{1'b0}}; 
-		valid_in <= 1'b0;
+		//valid_in <= 1'b0;
 		// consume the pointer
 		used_pointer_valid <= 1'b1;
 		used_pointer <= {s_wlast,location_counter,current_pointer};
 	end
-	if ((rcvd_state == rcvd) && location_counter == {SEGMENT_SIZE_W{1'b1}}) begin // counter will wrap around -- end of segment
-		if (next_pointer_valid == 1'b1) begin // we have another pointer available
-			rcvd_state <= rcvd;
-		end else begin // no pointer available, need to backpressure.
-			rcvd_state <= idle;
-		end
+	if (/*(rcvd_state == rcvd) &&*/ location_counter == {SEGMENT_SIZE_W{1'b1}} && s_wvalid && current_pointer_valid) begin // counter will wrap around -- end of segment
+		// if (next_pointer_valid == 1'b1) begin // we have another pointer available
+			// rcvd_state <= rcvd;
+		// end else begin // no pointer available, need to backpressure.
+			// rcvd_state <= idle;
+		// end
 		used_pointer_valid <= 1'b1;
 		used_pointer <= {s_wlast,location_counter,current_pointer};
 	end
 	
 	buffer_wr_addr <= {current_pointer,location_counter};
-	if (rcvd_state == rcvd || (current_pointer_valid == 1'b1 && rcvd_state == idle && s_wvalid == 1'b1)) begin // missing the first transfer
+//	if (rcvd_state == rcvd || (current_pointer_valid == 1'b1 && rcvd_state == idle && s_wvalid == 1'b1)) begin // missing the first transfer
+	if (current_pointer_valid == 1'b1 && s_wvalid == 1'b1) begin // missing the first transfer
 	    data_in <= {s_wlast,s_wdata};
 	    valid_in <= s_wvalid;
 	    last_in <= s_wlast;
