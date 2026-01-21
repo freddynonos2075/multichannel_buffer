@@ -33,11 +33,17 @@ module tb_axi_s2;
   logic                m_axis_tlast;
  
  // ------------------------------------------------------------
-  // log files
-  // ------------------------------------------------------------
+ // log files
+ // ------------------------------------------------------------
 
 	integer fd_send;
 	integer fd_rcvd;
+
+ // ------------------------------------------------------------
+ // CSR
+ // ------------------------------------------------------------
+
+	axi4lite_if dut_csr (.ACLK    (clk),    .ARESETn (resetn)  );
 
   // ------------------------------------------------------------
   // Clock and Reset
@@ -95,7 +101,8 @@ buffer_top #(
     ,.s_rlast   (m_axis_tlast)// End of frame/packet 
     ,.s_rkeep   ()// Byte qualifiers -- only bytes not used would be at the end of the packet
 		
-	// control TBD
+	// control
+	,.csr       (dut_csr)
 	
 );
 
@@ -328,5 +335,114 @@ buffer_top #(
 
     $finish;
   end
+
+// --------------------------------------------
+//
+//      CSR
+//
+// --------------------------------------------
+
+
+// --------------------
+  // AXI Master Tasks
+  // --------------------
+  task automatic axi_write (
+    input logic [31:0] addr,
+    input logic [31:0] data
+  );
+    // Address + data
+    dut_csr.AWADDR  <= addr;
+    dut_csr.AWVALID <= 1'b1;
+    dut_csr.WDATA   <= data;
+    dut_csr.WSTRB   <= 4'hF;
+    dut_csr.WVALID  <= 1'b1;
+    dut_csr.BREADY  <= 1'b1;
+
+    // Wait for handshake
+    wait (dut_csr.AWREADY && dut_csr.WREADY);
+    @(posedge clk);
+    dut_csr.AWVALID <= 1'b0;
+    dut_csr.WVALID  <= 1'b0;
+
+    // Wait for response
+    wait (dut_csr.BVALID);
+    @(posedge clk);
+    dut_csr.BREADY <= 1'b0;
+  endtask
+
+
+  task automatic axi_read (
+    input  logic [31:0] addr,
+    output logic [31:0] data
+  );
+    dut_csr.ARADDR  <= addr;
+    dut_csr.ARVALID <= 1'b1;
+    dut_csr.RREADY  <= 1'b1;
+
+    // Address handshake
+    wait (dut_csr.ARREADY);
+    @(posedge clk);
+    dut_csr.ARVALID <= 1'b0;
+
+    // Data phase
+    wait (dut_csr.RVALID);
+    data = dut_csr.RDATA;
+    @(posedge clk);
+    dut_csr.RREADY <= 1'b0;
+  endtask
+
+ // --------------------
+  // Test sequence
+  // --------------------
+  logic [31:0] rdata;
+
+  initial begin
+     // Drive defaults
+    dut_csr.AWVALID = 0;
+    dut_csr.WVALID  = 0;
+    dut_csr.BREADY  = 0;
+    dut_csr.ARVALID = 0;
+    dut_csr.RREADY  = 0;
+
+    repeat (400) @(posedge clk);
+    
+
+    $display("AXI READ");
+    axi_read(32'h0000_0004, rdata);
+
+    $display("AXI WRITE");
+    axi_write(32'h0000_0004, 32'hDEADC0DE);
+
+    $display("AXI READ");
+    axi_read(32'h0000_0004, rdata);
+
+    if (rdata == 32'hDEADC0DE) begin
+      $display("PASS: Read data matches");
+    end else begin
+      $display("FAIL: Read data = %h", rdata);
+	end
+
+    $display("AXI READ");
+    axi_read(32'h0000_0020, rdata);
+	$display("CSR READ: Read data = %h", rdata);
+    axi_read(32'h0000_0024, rdata);
+	$display("CSR READ: Read data = %h", rdata);
+    axi_read(32'h0000_0028, rdata);
+	$display("CSR READ: Read data = %h", rdata);
+    axi_read(32'h0000_002c, rdata);
+	$display("CSR READ: Read data = %h", rdata);
+    axi_read(32'h0000_0030, rdata);
+	$display("CSR READ: Read data = %h", rdata);
+    axi_read(32'h0000_0034, rdata);
+	$display("CSR READ: Read data = %h", rdata);
+    axi_read(32'h0000_0038, rdata);
+	$display("CSR READ: Read data = %h", rdata);
+    axi_read(32'h0000_003c, rdata);
+	$display("CSR READ: Read data = %h", rdata);
+
+    #20;
+    $finish;
+  end
+
 
 endmodule

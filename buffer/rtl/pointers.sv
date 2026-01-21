@@ -56,7 +56,7 @@ generate
 			fifo_wr_req <= wr_req;
 			fifo_wr_din <= wr_din;
 			if (rstn == 1'b0) begin //reset
-				init_done <= 1'b0;
+				init_done <= 1'b1;
 				pointer_counter <= 'b0;
 				fifo_wr_req <= 1'b0;
 			end

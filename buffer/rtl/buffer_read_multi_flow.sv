@@ -8,6 +8,7 @@ module buffer_read_multi_flow #(
 	,parameter ADDR_WIDTH = BUF_SEG_AW + SEGMENT_SIZE_W
 	,parameter FLOWS_W = 3 // number of flow is 2**FLOWS_W
 	,parameter DWRR_BUFFER_W = FLOWS_W + 2 // put 4 entries per flow for a balanced weight distribution 
+	,parameter VERSION_NUMBER = 32'h20251218
 	)(
 	 input logic                   clk
 	,input logic                   rstn
@@ -26,7 +27,8 @@ module buffer_read_multi_flow #(
 	,output logic [ADDR_WIDTH-1:0] b_raddr
 	
 	// will need a AXI interface for control of the weights
-	
+	,axi4lite_if.slave             csr
+
 );
 
 localparam MAX_CREDIT_W = 6; // 2**MAX_CREDIT_W is the max number of credits
@@ -40,6 +42,9 @@ logic [BUF_SEG_AW+SEGMENT_SIZE_W:0] pointers_current;
 logic pointer_valid;
 logic pointers_emtpy [2**FLOWS_W-1:0];
 logic pointers_rd_req_r;
+logic [2**FLOWS_W-1:0] init_done ;
+logic [BUF_SEG_AW+SEGMENT_SIZE_W:0] usedw [2**FLOWS_W-1:0];
+
 
 // counter to see when we arrive to the end of the segment
 logic [SEGMENT_SIZE_W-1:0] location_counter;
@@ -77,7 +82,9 @@ generate
 			,.rd_req       (pointers_rd_req[i])  // Read request
 			,.rd_dout      (pointers_rd_out[i])  // Read data
 			,.fifo_empty   (pointers_emtpy[i])
-			,.init_done    ()
+			,.init_done    (init_done[i])
+			,.usedw        (usedw[i])
+			,.full()
 		);
     end
 endgenerate
@@ -237,158 +244,107 @@ always_ff @(posedge clk) begin
 end
 
 
+// --------------------------------
+//            CSR
+// --------------------------------
+
+// put a few things there:
+// version register
+// scratch register
+// 1 info registers (top bit is OR)
+// 1 warning registers (top bit is OR)
+// 1 error registers (top bit is OR)
+// then maybe the flow credits
+// all info, warning and error will be W1C
+
+// info[0]: init done on all pointers
+// info[7]: OR of all info
+ 
+//  logic [31:0] mem [0:2**(FLOWS_W)-1];   
+  
+  logic [31:0] version_reg = VERSION_NUMBER; // adr 0
+  logic [31:0] scratch_reg; // adr 1 
+  logic [31:0] info_reg;    // adr 2
+  logic [31:0] warning_reg; // adr 3
+  logic [31:0] error_reg;   // adr 4
+//logic [2**FLOWS_W-1:0] init_done ; // will go to the info register
+//logic [BUF_SEG_AW+SEGMENT_SIZE_W:0] usedw [2**FLOWS_W-1:0]; // adr 8+2**FLOW - 8+2*2**FLOW
 
 
 
+  //always_ff @(posedge csr.ACLK ) begin
+  always_ff @(posedge clk ) begin
+
+      // Write
+      if (csr.AWVALID && csr.WVALID && !csr.BVALID) begin
+		case (csr.AWADDR[csr.ADDR_WIDTH-1:2])
+			1 : scratch_reg <= csr.WDATA;
+			2 : info_reg    <= csr.WDATA; // need to change that to W1C
+			3 : warning_reg <= csr.WDATA; // need to change that to W1C
+			4 : error_reg   <= csr.WDATA; // need to change that to W1C
+		endcase
+        csr.BVALID <= 1'b1;
+      end else if (csr.BVALID && csr.BREADY) begin
+        csr.BVALID <= 1'b0;
+      end
+
+      // Read
+      if (csr.ARVALID && csr.ARREADY && !csr.RVALID) begin
+        // unsure if/how I could use a case statement here
+		if         (csr.ARADDR[csr.ADDR_WIDTH-1:2] == 0) begin
+			csr.RDATA  <= version_reg;
+		end else if(csr.ARADDR[csr.ADDR_WIDTH-1:2] == 1) begin
+			csr.RDATA  <= scratch_reg;
+		end else if(csr.ARADDR[csr.ADDR_WIDTH-1:2] == 2) begin
+			csr.RDATA  <= info_reg;
+		end else if(csr.ARADDR[csr.ADDR_WIDTH-1:2] == 3) begin
+			csr.RDATA  <= warning_reg;
+		end else if(csr.ARADDR[csr.ADDR_WIDTH-1:2] == 5) begin
+			csr.RDATA  <= error_reg;
+		end else if(csr.ARADDR[csr.ADDR_WIDTH-1:2] >= 8) begin
+			csr.RDATA  <= usedw[csr.ARADDR[ADDR_WIDTH-1:2]-8];
+		// end else if(csr.ARADDR[csr.ADDR_WIDTH-1:2] == 8) begin
+			// csr.RDATA  <= usedw[0];
+		// end else if(csr.ARADDR[csr.ADDR_WIDTH-1:2] == 9) begin
+			// csr.RDATA  <= usedw[1];
+		// end else if(csr.ARADDR[csr.ADDR_WIDTH-1:2] == 10) begin
+			// csr.RDATA  <= usedw[2];
+		// end else if(csr.ARADDR[csr.ADDR_WIDTH-1:2] == 11) begin
+			// csr.RDATA  <= usedw[3];
+		// end else if(csr.ARADDR[csr.ADDR_WIDTH-1:2] == 12) begin
+			// csr.RDATA  <= usedw[4];
+		// end else if(csr.ARADDR[csr.ADDR_WIDTH-1:2] == 13) begin
+			// csr.RDATA  <= usedw[5];
+		// end else if(csr.ARADDR[csr.ADDR_WIDTH-1:2] == 14) begin
+			// csr.RDATA  <= usedw[6];
+		// end else if(csr.ARADDR[csr.ADDR_WIDTH-1:2] == 15) begin
+			// csr.RDATA  <= usedw[7];
+        end else begin
+			csr.RDATA  <= 32'hDEADDEAD;
+		end
+		csr.RVALID <= 1'b1;
+      end else if (csr.RVALID && csr.RREADY) begin
+        csr.RVALID <= 1'b0;
+      end
+
+    if (!rstn) begin
+      csr.AWREADY <= 1'b1;
+      csr.WREADY  <= 1'b1;
+      csr.BVALID  <= 1'b0;
+      csr.BRESP   <= 2'b00;
+      csr.ARREADY <= 1'b1;
+      csr.RVALID  <= 1'b0;
+      csr.RRESP   <= 2'b00;
+	  version_reg <= VERSION_NUMBER;
+	  scratch_reg <= 32'hFFFFFFFF;
+	  info_reg <= 32'h0;
+	  warning_reg <= 32'h0;
+	  error_reg <= 32'h0;
+	  
+	end
+  end
 
 
-
-// // read when we can and increment when tready is high
-// // will need prefetching the next segment
-// always_ff @(posedge clk) begin
-	// pointers_rd_req <= {(2**FLOWS_W){1'b0}};
-	// freed_pointer_valid <= 1'b0;
-	// s_rvalid <= 1'b0;
-	// // we are not active at the moment, need a first pointer -- take the decision from the DWRR to select the right pointer list
-	// if (pointers_rd_req[current_selected_flow] == 1'b0 && pointers_rd_req_r == 1'b0 /*&& pointers_emtpy[current_selected_flow] == 1'b0 implicit */ && current_flow_valid == 1'b1 && rcvd_state == idle) begin // latency of 1 to get the data  -- this does not work as we try to fetch whilst we are already sending. Need a state as well
-		// pointers_rd_req[current_selected_flow] <= 1'b1;
-		// location_counter <= {SEGMENT_SIZE_W{1'b0}};
-		// rcvd_state <= rcvd;
-	// end
-	// // this is the end of the current packet, need to get new one -- take the decision from the DWRR to select the right pointer list
-	// if (s_rlast == 1'b1) begin // last item in the segment and end of packet -- This is where we should make a decision on which flow to use
-		// if (next_flow_valid == 1'b1) begin
-			// if (pointers_rd_req[next_selected_flow] == 1'b0 && pointers_rd_req_r == 1'b0) begin
-				// pointers_rd_req[next_selected_flow] <= 1'b1;
-			// end
-			// location_counter <= {SEGMENT_SIZE_W{1'b0}};
-		// end else begin
-			// rcvd_state <= idle;
-		// end
-		// // corner case when the whole segment is used and we just freed the pointer on the previous clock cycle due to the location counter saturating
-		// if (location_counter_r != {SEGMENT_SIZE_W{1'b1}}) begin
-			// freed_pointer_valid <= 1'b1;
-		// end
-	// end
-	// // this is the end of a segment but not the last segment in the packet, keep selecting from the same pointer list
-	// if (location_counter == {SEGMENT_SIZE_W{1'b1}} && s_rlast == 1'b0) begin // last item in the segment and end of packet
-		// if (next_flow_valid == 1'b1) begin
-			// if (pointers_rd_req[next_selected_flow] == 1'b0 && pointers_rd_req_r == 1'b0) begin
-				// pointers_rd_req[next_selected_flow] <= 1'b1;
-			// end
-			// location_counter <= {SEGMENT_SIZE_W{1'b0}};
-		// end
-		// freed_pointer_valid <= 1'b1;
-	// end
-	// // will need to take from the current pointer list to 
-	// if (pointers_rd_req_r == 1'b1) begin // this works only because we get a new pointer when we know we have one (otherwise would need to check the empty
-		// freed_pointer <= pointers_rd_out[current_selected_flow][BUF_SEG_AW-1:0]; // are we releasing this too early? probably should wait for the last of the packet or segment to release otherwise could be used whilst we are draining. 
-		// // freed_pointer <= pointers_rd_out[BUF_SEG_AW-1:0][current_selected_flow]; // are we releasing this too early? probably should wait for the last of the packet or segment to release otherwise could be used whilst we are draining. 
-	// end
-	// if (current_flow_valid == 1'b1 && s_rready == 1'b1 && s_rlast == 1'b0) begin
-		// location_counter <= location_counter + 1'b1;
-		// s_rvalid <= 1'b1;
-	// end
-	// pointers_rd_req_r <= |pointers_rd_req; // any read request would trigger
-	// location_counter_r <= location_counter;
-	
-	// //if (pointers_rd_req_r == 1'b1) begin // this works only because we get a new pointer when we know we have one (otherwise would need to check the empty
-		// // need to update this when we are at the end of a segment
-		// pointers_current <= pointers_rd_out[current_selected_flow];
-	// //end
-	
-	// if (rstn == 1'b0) begin
-		// pointers_rd_req <= {(2**FLOWS_W){1'b0}};
-		// pointer_valid <= 1'b0;
-		// pointers_current <= {(BUF_SEG_AW){1'b0}};
-		// location_counter <= {SEGMENT_SIZE_W{1'b0}};
-		// location_counter_r <= {SEGMENT_SIZE_W{1'b0}};
-		// freed_pointer <= {BUF_SEG_AW{1'b0}};
-		// freed_pointer_valid <= 1'b0;
-		// s_rvalid <= 1'b0;
-		// rcvd_state <= idle;
-	// end
-// end
-
-// // -------- DWRR section --------------
-
-// // logic [MAX_CREDIT_W-1:0] flow_credits [2**FLOWS_W-1:0]; // credits for each flow
-// // logic [FLOWS_W-1:0] current_selected_flow;
-// // logic [FLOWS_W-1:0] next_selected_flow;
-// // logic              current_flow_valid;
-// // logic              next_flow_valid;
-// // logic              dwrr_init_done;
-// // logic              dwrr_next_credit_req;
-// // logic [FLOWS_W-1:0] dwrr_next_credit_value;
-// // logic [FLOWS_W-1:0] rr_counter;
-
-// //DWRR_BUFFER_W
-// //reuse the pointer buffer as a mea
-// always_ff @(posedge clk)
-// begin
-
-	// // select the next flow
-	// if (next_flow_valid == 1'b0) begin
-		// if (pointers_emtpy[rr_counter] == 1'b0 && flow_credits[rr_counter] != {2**FLOWS_W{1'b0}}) begin // there are credits -- will need to do a prefetch on this the credits otherwise this is too slow -- assume prefectch is on for now
-			// // this could reselect the same flow after going full cicle if no other flow is selected
-			// next_flow_valid <= 1'b1;
-			// next_selected_flow <= rr_counter;
-		// end 
-		// rr_counter <= rr_counter + 1'b1; // go to the next address. Go if the one we are looking at is empty, but also go if we select it as we want to start from the next flow on the next try
-	// end
-	// // move to current flow and spend a credit
-	// if (current_flow_valid == 1'b1) begin 
-		// if (next_flow_valid == 1'b1 && s_rlast == 1'b1) begin // end of a packet, go to the next flow. 
-			// current_selected_flow <= next_selected_flow;
-			// current_flow_valid <= next_flow_valid;
-			// flow_credits[next_selected_flow] <= flow_credits[next_selected_flow] - 1'b1;
-			// if (pointers_emtpy[rr_counter] == 1'b0 && flow_credits[rr_counter] != {2**FLOWS_W{1'b0}}) begin
-				// next_flow_valid <= 1'b1; 
-				// next_selected_flow <= rr_counter;
-			// end else begin
-				// next_flow_valid <= 1'b0;
-			// end
-		// end else if (s_rlast == 1'b1) begin
-			// current_flow_valid <= 1'b0; 
-		// end
-	// end else begin
-		// if (next_flow_valid == 1'b1 /* && current_flow_valid == 1'b0 -- implicit */) begin // end of a packet, go to the next flow. 
-			// current_selected_flow <= next_selected_flow;
-			// current_flow_valid <= next_flow_valid;
-			// flow_credits[next_selected_flow] <= flow_credits[next_selected_flow] - 1'b1;
-			// if (pointers_emtpy[rr_counter] == 1'b0 && flow_credits[rr_counter] != {2**FLOWS_W{1'b0}}) begin
-				// next_flow_valid <= 1'b1; 
-				// next_selected_flow <= rr_counter;
-			// end else begin
-				// next_flow_valid <= 1'b0;
-			// end
-		// end
-	// end
-	
-
-	// // give credits
-	// if (s_rlast == 1'b1) begin
-		// if (next_flow_valid == 1'b1 && current_selected_flow != next_selected_flow) begin
-			// flow_credits[dwrr_next_credit_value] <= flow_credits[dwrr_next_credit_value] + 1'b1; // will need to check we are not consuming at the same time, in which case no changes
-		// end
-		// dwrr_next_credit_req <= 1'b1; // get ready to credit the next port
-	// end else begin
-		// dwrr_next_credit_req <= 1'b0;
-	// end
-	// // give this based on a counter ? (may want to do that also when a new pointer is selcted.
-	// next_selected_flow_r <= next_selected_flow;
-	// next_selected_flow_r2 <= next_selected_flow_r;
-	
-
-	// if (rstn == 1'b0) begin
-		// current_flow_valid <= 1'b0;
-		// next_flow_valid <= 1'b0;
-		// rr_counter <= {FLOWS_W{1'b0}};
-		// for (int j = 0; j < 2**FLOWS_W; j++) begin
-			// flow_credits[j] <= {1'b0,{(MAX_CREDIT_W-1){1'b1}}};
-		// end
-	// end
-// end 
 
 assign b_raddr = {pointers_current[BUF_SEG_AW-1:0],location_counter};
 assert property (@(posedge clk)
