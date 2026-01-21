@@ -7,7 +7,7 @@ module tb_axi_s2;
   // ------------------------------------------------------------
   parameter DATA_W     = 32;
   parameter MAX_PKT_SZ = 128;     // bytes excluding pkt_num + flow byte
-  parameter NUM_PKTS   = 512;
+  parameter NUM_PKTS   = 32;
 
 	parameter int BUF_SEG_AW = 5; // this will represent the number of segments 2**n
 	parameter int SEGMENT_SIZE_W = 3; // 2**n Bytes
@@ -165,8 +165,9 @@ buffer_top #(
   task send_packet(packet_t pkt);
     static int idx_s;
 
-	idx_s <= 0;
-    @(posedge clk);
+	idx_s = 0;
+	$fdisplay(fd_send, "send_packet task, pre clk");
+    //@(posedge clk);
     s_axis_tvalid <= 1;
     //$display("Task Send packet of size  %0d ...", pkt.data.size());
 	$fdisplay(fd_send, "***** packet %d flow %0x size %d *****", pkt.pkt_id,pkt.flow_id, pkt.data.size());
@@ -174,10 +175,11 @@ buffer_top #(
       s_axis_tdata <= pkt.data[idx_s];
       s_axis_tlast <= (idx_s == pkt.data.size()-1);
 	  s_axis_tsideband <= pkt.flow_id;
+		$fdisplay(fd_send, "pre_clk  %d data %x", idx_s,pkt.data[idx_s]);
 
       @(posedge clk);
       if (s_axis_tvalid && s_axis_tready) begin
-		$fdisplay(fd_send, "%d data %x", idx_s,pkt.data[idx_s]);
+		$fdisplay(fd_send, "post_clk %d data %x", idx_s,pkt.data[idx_s]);
         idx_s++;
 	  end
     end
@@ -311,7 +313,7 @@ buffer_top #(
           $display(">>>>>>> TB: Sending pkt %0d, flow=%0d, size=%0d ",
                    i, pkt.flow_id, pkt.data.size());
           send_packet(pkt);
-          repeat($urandom_range(1,5)) @(posedge clk);
+          repeat($urandom_range(0,5)) @(posedge clk);
         end
       end
 

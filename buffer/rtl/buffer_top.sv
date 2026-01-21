@@ -108,6 +108,11 @@ begin
 				current_pointer_valid <= 1'b1;
 				current_pointer <= next_pointer;
 				next_pointer_valid <= 1'b0; // get ready to fetch the next pointer.
+				// save a clock by requesting the next one now
+				if (pointers_rd_req == 1'b0 && pointers_rd_req_r == 1'b0) begin //fetch a new pointer as soon as possible - it takes 3 cycles a the start rather than 2
+					pointers_rd_req <= 1'b1 & ~pointers_empty; // could try to fetch every 3 cycles, but may as well wait for the FIFO to have data. Possibly irrelevant, may be better to try to fetch
+				end
+
 			end
 		end
 		// last cycle of the word/segment so try to get a new pointer
@@ -116,6 +121,9 @@ begin
 				current_pointer_valid <= 1'b1;
 				current_pointer <= next_pointer;
 				next_pointer_valid <= 1'b0; // get ready to fetch the next pointer.
+				if (pointers_rd_req == 1'b0 && pointers_rd_req_r == 1'b0) begin //fetch a new pointer as soon as possible - it takes 3 cycles a the start rather than 2
+					pointers_rd_req <= 1'b1 & ~pointers_empty; // could try to fetch every 3 cycles, but may as well wait for the FIFO to have data. Possibly irrelevant, may be better to try to fetch
+				end
 			end else begin
 				current_pointer_valid <= 1'b0;
 			end
@@ -127,6 +135,9 @@ begin
 				current_pointer_valid <= 1'b1;
 				current_pointer <= next_pointer;
 				next_pointer_valid <= 1'b0; // get ready to fetch the next pointer.
+				if (pointers_rd_req == 1'b0 && pointers_rd_req_r == 1'b0) begin //fetch a new pointer as soon as possible - it takes 3 cycles a the start rather than 2
+					pointers_rd_req <= 1'b1 & ~pointers_empty; // could try to fetch every 3 cycles, but may as well wait for the FIFO to have data. Possibly irrelevant, may be better to try to fetch
+				end
 			end else begin
 				current_pointer_valid <= 1'b0;
 			end
