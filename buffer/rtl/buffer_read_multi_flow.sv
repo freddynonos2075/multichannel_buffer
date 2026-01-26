@@ -71,7 +71,7 @@ logic data_valid;
 genvar i;
 generate
     for (i = 0; i < 2**FLOWS_W; i++) begin : GEN_USED_POINTERS
-		pointers #(
+		pointers_orig #(
 			 .DATA_WIDTH (BUF_SEG_AW+SEGMENT_SIZE_W+1)
 			,.INITIALISE_POINTERS("NO")
 		) used_pointers (

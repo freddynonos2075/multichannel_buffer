@@ -60,6 +60,7 @@ logic rving_packet;
 
 // free pointers
 logic [BUF_SEG_AW-1:0] pointers_rd_out; // pointer from the free pointers list
+logic pointers_rd_out_valid;
 logic pointers_empty;
 logic pointers_init_done;
 logic pointers_wr_req;
@@ -67,6 +68,7 @@ logic [BUF_SEG_AW-1:0] pointers_wr_din;
 logic pointers_rd_req;
 logic pointers_rd_req_r;
 logic pointers_empty_r;
+logic pointers_request; // requesting a pointer, waiting for the pointer_rd_out_valid
 
 // consumed pointers and release
 logic [BUF_SEG_AW+SEGMENT_SIZE_W:0]  used_pointer; // top bit is for the last indication
@@ -96,12 +98,15 @@ assign s_wready = (current_pointer_valid || (rcvd_state == rcvd) ) && pointers_i
 always_ff @(posedge clk) // will need to add something with the init done
 begin
 	pointers_rd_req <= 1'b0;
+	
 	if (pointers_init_done == 1'b1) begin
-		if (next_pointer_valid == 1'b0 && pointers_rd_req == 1'b0 && pointers_rd_req_r == 1'b0) begin //fetch a new pointer as soon as possible - it takes 3 cycles a the start rather than 2
+		if (next_pointer_valid == 1'b0 && pointers_request == 1'b0 ) begin //fetch a new pointer as soon as possible - it takes 3 cycles a the start rather than 2
 			pointers_rd_req <= 1'b1 & ~pointers_empty; // could try to fetch every 3 cycles, but may as well wait for the FIFO to have data. Possibly irrelevant, may be better to try to fetch
-		end else if (pointers_rd_req_r == 1'b1) begin // ask for a pointer, getting it now
+			pointers_request <= 1'b1 & ~pointers_empty;
+		end else if (pointers_request == 1'b1 && pointers_rd_out_valid == 1'b1) begin // ask for a pointer, getting it now
 			next_pointer <= pointers_rd_out; // grab from the free pointer list
-			next_pointer_valid <= ~pointers_empty_r; // may be one cycle too late for the empty
+			next_pointer_valid <= 1'b1; // may be one cycle too late for the empty
+			pointers_request <= 1'b0;
 		end
 		if (current_pointer_valid == 1'b0) begin // get a pointer if we don't have one
 			if (next_pointer_valid == 1'b1) begin
@@ -109,8 +114,9 @@ begin
 				current_pointer <= next_pointer;
 				next_pointer_valid <= 1'b0; // get ready to fetch the next pointer.
 				// save a clock by requesting the next one now
-				if (pointers_rd_req == 1'b0 && pointers_rd_req_r == 1'b0) begin //fetch a new pointer as soon as possible - it takes 3 cycles a the start rather than 2
+				if (pointers_rd_req == 1'b0 && pointers_request == 1'b0) begin //fetch a new pointer as soon as possible - it takes 3 cycles a the start rather than 2
 					pointers_rd_req <= 1'b1 & ~pointers_empty; // could try to fetch every 3 cycles, but may as well wait for the FIFO to have data. Possibly irrelevant, may be better to try to fetch
+					pointers_request <= 1'b1 & ~pointers_empty;			
 				end
 
 			end
@@ -121,8 +127,9 @@ begin
 				current_pointer_valid <= 1'b1;
 				current_pointer <= next_pointer;
 				next_pointer_valid <= 1'b0; // get ready to fetch the next pointer.
-				if (pointers_rd_req == 1'b0 && pointers_rd_req_r == 1'b0) begin //fetch a new pointer as soon as possible - it takes 3 cycles a the start rather than 2
+				if (pointers_rd_req == 1'b0 && pointers_request == 1'b0) begin //fetch a new pointer as soon as possible - it takes 3 cycles a the start rather than 2
 					pointers_rd_req <= 1'b1 & ~pointers_empty; // could try to fetch every 3 cycles, but may as well wait for the FIFO to have data. Possibly irrelevant, may be better to try to fetch
+					pointers_request <= 1'b1 & ~pointers_empty;
 				end
 			end else begin
 				current_pointer_valid <= 1'b0;
@@ -135,8 +142,9 @@ begin
 				current_pointer_valid <= 1'b1;
 				current_pointer <= next_pointer;
 				next_pointer_valid <= 1'b0; // get ready to fetch the next pointer.
-				if (pointers_rd_req == 1'b0 && pointers_rd_req_r == 1'b0) begin //fetch a new pointer as soon as possible - it takes 3 cycles a the start rather than 2
+				if (pointers_rd_req == 1'b0 && pointers_request == 1'b0) begin //fetch a new pointer as soon as possible - it takes 3 cycles a the start rather than 2
 					pointers_rd_req <= 1'b1 & ~pointers_empty; // could try to fetch every 3 cycles, but may as well wait for the FIFO to have data. Possibly irrelevant, may be better to try to fetch
+					pointers_request <= 1'b1 & ~pointers_empty;
 				end
 			end else begin
 				current_pointer_valid <= 1'b0;
@@ -152,6 +160,7 @@ begin
 		current_pointer <= {BUF_SEG_AW{1'b0}};
 		pointers_rd_req_r <= 1'b0;
 		pointers_empty_r <= 1'b1;
+		pointers_request <= 1'b0;
     end
  
 end
@@ -236,6 +245,7 @@ pointers #(
     ,.wr_din       (pointers_wr_din)  // Write data
     ,.rd_req       (pointers_rd_req)  // Read request
     ,.rd_dout      (pointers_rd_out)  // Read data
+	,.rd_out_valid (pointers_rd_out_valid)
     ,.fifo_empty   (pointers_empty)
     ,.init_done    (pointers_init_done)
 );

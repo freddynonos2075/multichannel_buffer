@@ -4,6 +4,7 @@ set env(BASE_LOC) C:/Users/macmini4/github/multichannel_buffer/buffer
 
 vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact     $env(BASE_LOC)/rtl/buffer_elem.sv
 vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact     $env(BASE_LOC)/rtl/pointers.sv
+vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact     $env(BASE_LOC)/rtl/pointers_orig.sv
 vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact     $env(BASE_LOC)/rtl/scfifo.sv
 vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact     $env(BASE_LOC)/rtl/buffer_top.sv
 vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact     $env(BASE_LOC)/rtl/buffer_read.sv
@@ -15,7 +16,7 @@ vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact -sv $env(B
 vlog +acc -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact     $env(BASE_LOC)/rtl/axi4lite_if.sv
 
 #vsim -onfinish stop -L altera_mf_ver -L work tb_axi_stream
-vsim -onfinish stop -L altera_mf_ver -L work tb_axi_s2
-do wave.do
-run 2us
+#vsim -onfinish stop -L altera_mf_ver -L work tb_axi_s2
+#do wave.do
+#run 2us
 

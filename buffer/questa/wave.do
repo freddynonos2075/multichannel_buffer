@@ -68,7 +68,6 @@ add wave -noupdate {/tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[4]/used_pointer
 add wave -noupdate {/tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[5]/used_pointers/usedw}
 add wave -noupdate {/tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[6]/used_pointers/usedw}
 add wave -noupdate {/tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[7]/used_pointers/usedw}
-add wave -noupdate {/tb_axi_s2/DUT/buffer_read/GEN_USED_POINTERS[8]/used_pointers/usedw}
 TreeUpdate [SetDefaultTree]
 quietly WaveActivateNextPane
 add wave -noupdate /tb_axi_s2/DUT/free_pointers/DATA_WIDTH
@@ -86,6 +85,25 @@ add wave -noupdate /tb_axi_s2/DUT/free_pointers/usedw
 add wave -noupdate /tb_axi_s2/DUT/free_pointers/pointer_counter
 add wave -noupdate /tb_axi_s2/DUT/free_pointers/fifo_wr_req
 add wave -noupdate /tb_axi_s2/DUT/free_pointers/fifo_wr_din
+add wave -noupdate -divider {New Divider}
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/rd_req
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/rd_dout
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/fifo_empty
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/init_done
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/fifo_wr_req
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/fifo_wr_din
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/val_lvl0
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/val_lvl0_valid
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/val_lvl1
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/val_lvl1_valid
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/fifo_rd_req
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/fifo_rd_out
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/lvl_rd_out
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/rd_req_r
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/rd_req_r2
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/fill_rd_req
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/rd_out
+add wave -noupdate /tb_axi_s2/DUT/free_pointers/fifo_rd_dout
 TreeUpdate [SetDefaultTree]
 quietly WaveActivateNextPane
 add wave -noupdate /tb_axi_s2/DUT/data_in
@@ -163,7 +181,7 @@ add wave -noupdate /tb_axi_s2/DUT/buffer_read/dww_credits/fifo_wr_req
 add wave -noupdate /tb_axi_s2/DUT/buffer_read/dww_credits/fifo_wr_din
 add wave -noupdate /tb_axi_s2/DUT/buffer_read/dww_credits/ram_inst/altera_syncram_inst/mem_data
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {4062722 ps} 0} {{Cursor 2} {27338605 ps} 0}
+WaveRestoreCursors {{Cursor 1} {694608 ps} 0} {{Cursor 2} {27338605 ps} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 293
 configure wave -valuecolwidth 100

@@ -38,7 +38,7 @@ logic [SEGMENT_SIZE_W-1:0] location_counter;
 logic [SEGMENT_SIZE_W-1:0] location_counter_r;
 
 
-pointers #(
+pointers_orig #( 
      .DATA_WIDTH (BUF_SEG_AW+1)
 	,.INITIALISE_POINTERS("NO")
 ) used_pointers (
