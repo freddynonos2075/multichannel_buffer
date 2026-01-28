@@ -6,6 +6,7 @@
 module pointers #(
      parameter DATA_WIDTH = 10 // the 2 parameters are related and should only be one
 	,parameter string INITIALISE_POINTERS = "YES"
+	,parameter FIFO_DEPTH = 2**DATA_WIDTH
 )(
      input  logic                     clk
     ,input  logic                     rstn
@@ -23,7 +24,7 @@ module pointers #(
 );
 // this will require some form of initialisation
 
-localparam int FIFO_DEPTH = 2** DATA_WIDTH;
+
 
 logic [DATA_WIDTH-1:0] pointer_counter;
 logic                     fifo_wr_req;         // Write enable

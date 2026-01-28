@@ -141,9 +141,9 @@ endgenerate
         .data_a          (fifo_wr_din),
         .q_a             (rd_out),
 
-        .aclr0           (~rstn),
-        .aclr1           (1'b0),
-        .clock1          (1'b0),
+        //.aclr0           (~rstn),
+        //.aclr1           (1'b0),
+        //.clock1          (1'b0),
         .clocken0        (1'b1),
         .clocken1        (1'b1),
         .clocken2        (1'b1),

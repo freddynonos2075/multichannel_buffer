@@ -60,9 +60,9 @@ logic [FLOWS_W-1:0] next_selected_flow_r;
 logic [FLOWS_W-1:0] next_selected_flow_r2;
 logic              current_flow_valid;
 logic              next_flow_valid;
-logic              dwrr_init_done;
-logic              dwrr_next_credit_req;
-logic [FLOWS_W-1:0] dwrr_next_credit_value;
+// logic              dwrr_init_done;
+// logic              dwrr_next_credit_req;
+// logic [FLOWS_W-1:0] dwrr_next_credit_value;
 logic [FLOWS_W-1:0] rr_counter;
 
 
@@ -74,6 +74,7 @@ generate
 		pointers_orig #(
 			 .DATA_WIDTH (BUF_SEG_AW+SEGMENT_SIZE_W+1)
 			,.INITIALISE_POINTERS("NO")
+			,.FIFO_DEPTH (BUF_SEG_AW)
 		) used_pointers (
 			 .clk          (clk)
 			,.rstn         (rstn)
@@ -89,17 +90,17 @@ generate
     end
 endgenerate
 
-dwrr_credits #(
-     .DEPTH_W (5) // the 2 parameters are related and should only be one
-	,.FLOW_W (FLOWS_W) // must be lower than DEPTH_W
-)dww_credits (
-     .clk                   (clk)
-    ,.rstn                  (rstn)
-    ,.rd_req                (dwrr_next_credit_req)   // Read request
-    ,.rd_out                (dwrr_next_credit_value)   // Read data
-    ,.init_done             (dwrr_init_done)
+// dwrr_credits #(
+     // .DEPTH_W (5) // the 2 parameters are related and should only be one
+	// ,.FLOW_W (FLOWS_W) // must be lower than DEPTH_W
+// )dww_credits (
+     // .clk                   (clk)
+    // ,.rstn                  (rstn)
+    // ,.rd_req                (dwrr_next_credit_req)   // Read request
+    // ,.rd_out                (dwrr_next_credit_value)   // Read data
+    // ,.init_done             (dwrr_init_done)
 
-);
+// );
 
 // logic [2**FLOWS_W-1:0] pointers_rd_req ;
 // logic [BUF_SEG_AW-1:0] pointers_rd_out [2**FLOWS_W-1:0];
